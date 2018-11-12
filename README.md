@@ -94,6 +94,7 @@ Provider.wrap(
     {
         id: String,
         Router: AnewRouterObject,
+        RouterConfig: Object,
         Provider: ReactComponent,
     }
 )
@@ -104,6 +105,8 @@ Provider.wrap(
 `id` (Optional): DOM id to mount wrapped react component to.
 
 `Router` (Optional): Anew Router Object that wraps the `Component` along with the provider.
+
+`RouterConfig` (Optional): Router's configuration. See the wrap method in [@anew/router](https://github.com/anew-org/router#parameters-1) for more infromation.
 
 `Provider` (Optional): A react provider that get passed the store as a prop.
 
