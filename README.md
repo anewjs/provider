@@ -101,11 +101,11 @@ Provider.wrap(
 
 `Component`: Entry react component to Application.
 
-`id`: DOM id to mount wrapped react component to.
+`id` (Optional): DOM id to mount wrapped react component to.
 
-`Router`: Anew Router Object that wraps the `Component` along with the provider.
+`Router` (Optional): Anew Router Object that wraps the `Component` along with the provider.
 
-`Provider`: A react provider that get passed the store as a prop.
+`Provider` (Optional): A react provider that get passed the store as a prop.
 
 The wrap method returns the `Component` wrapped around the provider with the configured store. This could be used with any component that you want to access some store. Most often, this method is used to provide the application's root store to the entire application. Note, you should not pass the id parameter to wrap a sub component from the appliation as that attempts to mount the component to the DOM at the provided element `id`.
 
@@ -148,7 +148,7 @@ Provider.wrap(EntryComponent, { id: 'root' }) /* => {
 Provider.connect(Component || Object)
 ```
 
-This connect method is not different to the [react-redux connect](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#connect) except that it passes an addition parameter to `mapStateToProps` which is the provided store's `getState` method for accessing anew store selectors.
+The connect method is not different fromt the [react-redux's connect method](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#connect) except that it passes an addition parameter to `mapStateToProps` which is the provided store's `getState` method for accessing anew's store selectors.
 
 ```js
 Provider.store(StoreObject)
