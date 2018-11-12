@@ -12,17 +12,17 @@ export class ProviderCore {
     }
 
     wrap(Component, { id, Router, Provider = DefaultProvider } = {}) {
-        const App = (
+        const AnewProvider = () => (
             <Provider store={this.config.store}>
                 {Router ? Router.wrap(Component) : <Component />}
             </Provider>
         )
 
         if (id) {
-            render(App, document.getElementById(id))
+            render(<AnewProvider />, document.getElementById(id))
         }
 
-        return App
+        return AnewProvider
     }
 
     connect(Config) {
