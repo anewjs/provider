@@ -11,10 +11,10 @@ export class ProviderCore {
         this.config.store = store
     }
 
-    mount(Component, { id, Router, Provider = DefaultProvider } = {}) {
+    wrap(Component, { id, Router, Provider = DefaultProvider } = {}) {
         const App = (
             <Provider store={this.config.store}>
-                {Router ? Router.mount(Component) : <Component />}
+                {Router ? Router.wrap(Component) : <Component />}
             </Provider>
         )
 

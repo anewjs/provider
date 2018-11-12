@@ -79,17 +79,17 @@ const AppStore = Store({
 // Share AnewStore with entire App
 Provider.store(AppStore)
 
-// Mount App to DOM
+// Mount wrapped App to DOM
 // You can also optionally provide
 // an Anew Router that wraps App as well
 // See @anew/router for more on Router
-Provider.mount(ConnectedApp, { id: 'root', Router })
+Provider.wrap(ConnectedApp, { id: 'root', Router })
 ```
 
 ## Parameters
 
 ```js
-Provider.mount(
+Provider.wrap(
     Component: ReactComponent,
     {
         id: String,
@@ -101,11 +101,48 @@ Provider.mount(
 
 `Component`: Entry react component to Application.
 
-`id`: DOM id to mount react application to.
+`id`: DOM id to mount wrapped react component to.
 
 `Router`: Anew Router Object that wraps the `Component` along with the provider.
 
 `Provider`: A react provider that get passed the store as a prop.
+
+The wrap method returns the `Component` wrapped around the provider with the configured store. This could be used with any component that you want to access some store. Most often, this method is used to provide the application's root store to the entire application. Note, you should not pass the id parameter to wrap a sub component from the appliation as that attempts to mount the component to the DOM at the provided element `id`.
+
+```js
+import Provider, { ProviderCore } from '@anew/provider'
+
+
+class TodoComponent {...}
+class EntryComponent {...}
+
+// Alternative:
+// const TodoProvider = new ProviderCore()
+// TodoProvider.store(todoStore)
+const TodoProvider = new ProviderCore(todoStore)
+
+TodoProvider.wrap(TodoComponent) /* => (
+    <Provider>
+        <TodoComponent />
+    </Provider>
+)*/
+
+Provider.store(rootStore)
+
+Provider.wrap(EntryComponent, { id: 'root' }) /* => {
+    ReactDOM.render((
+        <Provider>
+            <EntryComponent />
+        </Provider>
+    ), document.getElementById('root'))
+
+    return (
+        <Provider>
+            <EntryComponent />
+        </Provider>
+    )
+}*/
+```
 
 ```js
 Provider.connect(Component || Object)
