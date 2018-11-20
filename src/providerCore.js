@@ -35,16 +35,18 @@ export class ProviderCore {
     }
 
     connect(Config) {
-        const { component, mapStateToProps, mapDispatchToProps, mergeProps, options } = Config
+        const { mapStateToProps, mapDispatchToProps, mergeProps, options } = Config
 
-        return connect(
+        const connection = connect(
             mapStateToProps
                 ? (state, props) => mapStateToProps(this.config.store.getState, state, props)
                 : null,
             mapDispatchToProps,
             mergeProps,
             options
-        )(component || Config)
+        )
+
+        return typeof Config === 'function' ? connection(Config) : connection
     }
 }
 
