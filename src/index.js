@@ -1,1 +1,1 @@
-export { default, ProviderCore } from './providerCore'
+export { default, AnewProvider } from './provider'
