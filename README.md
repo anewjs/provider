@@ -77,13 +77,10 @@ const AppStore = Store({
 })
 
 // Share AnewStore with entire App
-Provider.store(AppStore)
+Provider.use(AppStore)
 
 // Mount wrapped App to DOM
-// You can also optionally provide
-// an Anew Router that wraps App as well
-// See @anew/router for more on Router
-Provider.wrap(ConnectedApp, { id: 'root', Router })
+ReactDOM.render(Provider.wrap(ConnectedApp), document.getElementById('root'))
 ```
 
 ## Parameters
@@ -92,9 +89,6 @@ Provider.wrap(ConnectedApp, { id: 'root', Router })
 Provider.wrap(
     Component: ReactComponent,
     {
-        id: String,
-        Router: AnewRouterObject,
-        RouterConfig: Object,
         Provider: ReactComponent,
     }
 )
@@ -102,59 +96,43 @@ Provider.wrap(
 
 `Component`: Entry react component to Application.
 
-`id` (Optional): DOM id to mount wrapped react component to.
-
-`Router` (Optional): Anew Router Object that wraps the `Component` along with the provider.
-
-`RouterConfig` (Optional): Router's configuration. See the wrap method in [@anew/router](https://github.com/anewjs/router#parameters-1) for more infromation.
-
 `Provider` (Optional): A react provider that get passed the store as a prop.
 
 The wrap method returns the `Component` wrapped around the provider with the configured store. This could be used with any component that you want to access some store. Most often, this method is used to provide the application's root store to the entire application. Note, you should not pass the id parameter to wrap a sub component from the appliation as that attempts to mount the component to the DOM at the provided element `id`.
 
 ```js
-import Provider, { ProviderCore } from '@anew/provider'
+import Provider, { AnewProvider } from '@anew/provider'
 
+class TodoComponent extends React.Component {...}
 
-class TodoComponent {...}
-class EntryComponent {...}
+const TodoProvider = new AnewProvider(todoStore)
 
-// Alternative:
-// const TodoProvider = new ProviderCore()
-// TodoProvider.store(todoStore)
-const TodoProvider = new ProviderCore(todoStore)
+// Alternative to above
+const TodoProvider = new AnewProvider()
+TodoProvider.use(todoStore)
 
-TodoProvider.wrap(TodoComponent) /* => (
-    <Provider>
-        <TodoComponent />
-    </Provider>
-)*/
-
-Provider.store(rootStore)
-
-Provider.wrap(EntryComponent, { id: 'root' }) /* => {
-    ReactDOM.render((
-        <Provider>
-            <EntryComponent />
-        </Provider>
-    ), document.getElementById('root'))
-
-    return (
-        <Provider>
-            <EntryComponent />
-        </Provider>
-    )
-}*/
+// @return
+//
+// <Provider store={todoStore}>
+//     <TodoComponent />
+// </Provider>
+TodoProvider.wrap(TodoComponent)
 ```
 
 ```js
-Provider.connect(Component || Object)
+Provider.connect(Component)
+
+// or
+// you may extract the connect methods
+// from the Component class and pass
+// it directly to Provider.connect({...})
+Provider.connect(Config)(Component)
 ```
 
 The connect method is not different fromt the [react-redux's connect method](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#connect) except that it passes an addition parameter to `mapStateToProps` which is the provided store's `getState` method for accessing anew's store selectors.
 
 ```js
-Provider.store(StoreObject)
+Provider.use(StoreObject)
 ```
 
 An anew or redux store object. See [redux provider](https://github.com/reduxjs/react-redux/blob/master/docs/api.md#provider) for more information.
