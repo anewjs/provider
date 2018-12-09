@@ -3,7 +3,9 @@ import React from 'react'
 
 export class AnewProvider {
     constructor(store) {
-        this.use(store)
+        if (store) {
+            this.use(store)
+        }
     }
 
     use = store => {
@@ -12,6 +14,8 @@ export class AnewProvider {
         }
 
         this.configuration.store = store
+
+        return this
     }
 
     config = configuration => {
