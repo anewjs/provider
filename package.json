@@ -32,7 +32,11 @@
         "start": "babel src -w -d lib"
     },
     "dependencies": {
+        "hoist-non-react-statics": "^3.2.1",
+        "invariant": "^2.2.4",
+        "prop-types": "^15.6.2",
         "react": "^16.3.1",
+        "react-is": "^16.6.3",
         "react-redux": "^5.1.1",
         "redux": "^4.0.1"
     },

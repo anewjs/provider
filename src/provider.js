@@ -1,4 +1,4 @@
-import { Provider as DefaultProvider, connect } from 'react-redux'
+import { Provider as DefaultProvider, connect } from './react-redux'
 import React from 'react'
 
 export class AnewProvider {
@@ -7,7 +7,11 @@ export class AnewProvider {
     }
 
     use = store => {
-        this.store = store
+        if (!this.configuration) {
+            this.configuration = {}
+        }
+
+        this.configuration.store = store
     }
 
     config = configuration => {
@@ -15,13 +19,13 @@ export class AnewProvider {
     }
 
     wrap = (Component, config = {}) => {
-        const { Provider = DefaultProvider } = {
+        const { Provider = DefaultProvider, store } = {
             ...config,
             ...this.configuration,
         }
 
         const AnewProvider = () => (
-            <Provider store={this.store}>
+            <Provider store={store}>
                 <Component />
             </Provider>
         )
@@ -30,23 +34,7 @@ export class AnewProvider {
     }
 
     connect = Config => {
-        const { mapStateToProps, mapDispatchToProps, mergeProps, options } = Config
-        const connection = connect(
-            mapStateToProps
-                ? (state, props) => {
-                      const { getState } = this.store
-
-                      return getState
-                          ? mapStateToProps(getState, state, props)
-                          : mapStateToProps(state, props)
-                  }
-                : null,
-            mapDispatchToProps,
-            mergeProps,
-            options
-        )
-
-        return typeof Config === 'function' ? connection(Config) : connection
+        return typeof Config === 'function' ? connect(Config)(Config) : connect(Config)
     }
 }
 
