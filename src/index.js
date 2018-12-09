@@ -1,2 +1,2 @@
-export { connect } from './react-redux'
+export { Provider, connect } from './react-redux'
 export { default, AnewProvider } from './provider'
