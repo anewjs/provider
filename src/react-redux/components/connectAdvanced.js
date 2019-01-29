@@ -1,9 +1,34 @@
 import hoistStatics from 'hoist-non-react-statics'
 import invariant from 'invariant'
-import React, { Component, PureComponent } from 'react'
+import { Component, createElement } from 'react'
 import { isValidElementType } from 'react-is'
 
-import { ReactReduxContext } from './Context'
+import Subscription from '../utils/Subscription'
+import { storeShape, subscriptionShape } from '../utils/PropTypes'
+
+let hotReloadingVersion = 0
+const dummyState = {}
+function noop() {}
+function makeSelectorStateful(sourceSelector, store) {
+    // wrap the selector in an object that tracks its results between runs.
+    const selector = {
+        run: function runComponentSelector(props) {
+            try {
+                const nextProps = sourceSelector(store.get(), props)
+                if (nextProps !== selector.props || selector.error) {
+                    selector.shouldComponentUpdate = true
+                    selector.props = nextProps
+                    selector.error = null
+                }
+            } catch (error) {
+                selector.shouldComponentUpdate = true
+                selector.error = error
+            }
+        },
+    }
+
+    return selector
+}
 
 export default function connectAdvanced(
     /*
@@ -34,60 +59,40 @@ export default function connectAdvanced(
         // probably overridden by wrapper functions such as connect()
         methodName = 'connectAdvanced',
 
-        // REMOVED: if defined, the name of the property passed to the wrapped element indicating the number of
+        // if defined, the name of the property passed to the wrapped element indicating the number of
         // calls to render. useful for watching in react devtools for unnecessary re-renders.
         renderCountProp = undefined,
 
         // determines whether this HOC subscribes to store changes
         shouldHandleStateChanges = true,
 
-        // REMOVED: the key of props/context to get the store
+        // the key of props/context to get the store
         storeKey = 'store',
 
-        // REMOVED: expose the wrapped component via refs
+        // if true, the wrapped element is exposed by this HOC via the getWrappedInstance() function.
         withRef = false,
-
-        // use React's forwardRef to expose a ref of the wrapped component
-        forwardRef = false,
-
-        // the context consumer to use
-        context = ReactReduxContext,
 
         // additional options are passed through to the selectorFactory
         ...connectOptions
     } = {}
 ) {
-    invariant(
-        renderCountProp === undefined,
-        `renderCountProp is removed. render counting is built into the latest React dev tools profiling extension`
-    )
+    const subscriptionKey = storeKey + 'Subscription'
+    const version = hotReloadingVersion++
 
-    invariant(
-        !withRef,
-        'withRef is removed. To access the wrapped instance, use a ref on the connected component'
-    )
-
-    const customStoreWarningMessage =
-        'To use a custom Redux store for specific components,  create a custom React context with ' +
-        "React.createContext(), and pass the context object to React-Redux's Provider and specific components" +
-        ' like:  <Provider context={MyContext}><ConnectedComponent context={MyContext} /></Provider>. ' +
-        'You may also pass a {context : MyContext} option to connect'
-
-    invariant(
-        storeKey === 'store',
-        'storeKey has been removed and does not do anything. ' + customStoreWarningMessage
-    )
-
-    const Context = context
+    const contextTypes = {
+        [storeKey]: storeShape,
+        [subscriptionKey]: subscriptionShape,
+    }
+    const childContextTypes = {
+        [subscriptionKey]: subscriptionShape,
+    }
 
     return function wrapWithConnect(WrappedComponent) {
-        if (process.env.NODE_ENV !== 'production') {
-            invariant(
-                isValidElementType(WrappedComponent),
-                `You must pass a component to the function returned by ` +
-                    `${methodName}. Instead received ${JSON.stringify(WrappedComponent)}`
-            )
-        }
+        invariant(
+            isValidElementType(WrappedComponent),
+            `You must pass a component to the function returned by ` +
+                `${methodName}. Instead received ${JSON.stringify(WrappedComponent)}`
+        )
 
         const wrappedComponentName =
             WrappedComponent.displayName || WrappedComponent.name || 'Component'
@@ -101,132 +106,204 @@ export default function connectAdvanced(
             renderCountProp,
             shouldHandleStateChanges,
             storeKey,
+            withRef,
             displayName,
             wrappedComponentName,
             WrappedComponent,
         }
 
-        const { pure } = connectOptions
+        // TODO Actually fix our use of componentWillReceiveProps
+        /* eslint-disable react/no-deprecated */
 
-        let OuterBaseComponent = Component
-        let FinalWrappedComponent = WrappedComponent
+        class Connect extends Component {
+            constructor(props, context) {
+                super(props, context)
 
-        if (pure) {
-            OuterBaseComponent = PureComponent
-        }
+                this.version = version
+                this.state = {}
+                this.renderCount = 0
+                this.store = props[storeKey] || context[storeKey]
+                this.propsMode = Boolean(props[storeKey])
+                this.setWrappedInstance = this.setWrappedInstance.bind(this)
 
-        function makeDerivedPropsSelector() {
-            let lastProps
-            let lastState
-            let lastDerivedProps
-            let lastStore
-            let sourceSelector
-
-            return function selectDerivedProps(state, props, store) {
-                if (pure && lastProps === props && lastState === state) {
-                    return lastDerivedProps
-                }
-
-                if (store !== lastStore) {
-                    lastStore = store
-                    sourceSelector = selectorFactory(
-                        {
-                            commit: store.commit,
-                            dispatch: store.dispatch,
-                        }, // store.dispatch
-                        selectorFactoryOptions
-                    )
-                }
-
-                lastProps = props
-                lastState = state
-
-                const nextProps = sourceSelector(
-                    {
-                        state,
-                        get: store.get,
-                        select: store.select,
-                    },
-                    props
-                )
-
-                if (lastDerivedProps === nextProps) {
-                    return lastDerivedProps
-                }
-
-                lastDerivedProps = nextProps
-                return lastDerivedProps
-            }
-        }
-
-        function makeChildElementSelector() {
-            let lastChildProps, lastForwardRef, lastChildElement
-
-            return function selectChildElement(childProps, forwardRef) {
-                if (childProps !== lastChildProps || forwardRef !== lastForwardRef) {
-                    lastChildProps = childProps
-                    lastForwardRef = forwardRef
-                    lastChildElement = <FinalWrappedComponent {...childProps} ref={forwardRef} />
-                }
-
-                return lastChildElement
-            }
-        }
-
-        class Connect extends OuterBaseComponent {
-            constructor(props) {
-                super(props)
                 invariant(
-                    forwardRef ? !props.wrapperProps[storeKey] : !props[storeKey],
-                    'Passing redux store in props has been removed and does not do anything. ' +
-                        customStoreWarningMessage
-                )
-                this.selectDerivedProps = makeDerivedPropsSelector()
-                this.selectChildElement = makeChildElementSelector()
-                this.renderWrappedComponent = this.renderWrappedComponent.bind(this)
-            }
-
-            renderWrappedComponent(value) {
-                invariant(
-                    value,
-                    `Could not find "store" in the context of ` +
+                    this.store,
+                    `Could not find "${storeKey}" in either the context or props of ` +
                         `"${displayName}". Either wrap the root component in a <Provider>, ` +
-                        `or pass a custom React context provider to <Provider> and the corresponding ` +
-                        `React context consumer to ${displayName} in connect options.`
+                        `or explicitly pass "${storeKey}" as a prop to "${displayName}".`
                 )
-                const { storeState, store } = value
 
-                let wrapperProps = this.props
-                let forwardedRef
+                this.initSelector()
+                this.initSubscription()
+            }
 
-                if (forwardRef) {
-                    wrapperProps = this.props.wrapperProps
-                    forwardedRef = this.props.forwardedRef
+            getChildContext() {
+                // If this component received store from props, its subscription should be transparent
+                // to any descendants receiving store+subscription from context; it passes along
+                // subscription passed to it. Otherwise, it shadows the parent subscription, which allows
+                // Connect to control ordering of notifications to flow top-down.
+                const subscription = this.propsMode ? null : this.subscription
+                return { [subscriptionKey]: subscription || this.context[subscriptionKey] }
+            }
+
+            componentDidMount() {
+                if (!shouldHandleStateChanges) return
+
+                // componentWillMount fires during server side rendering, but componentDidMount and
+                // componentWillUnmount do not. Because of this, trySubscribe happens during ...didMount.
+                // Otherwise, unsubscription would never take place during SSR, causing a memory leak.
+                // To handle the case where a child component may have triggered a state change by
+                // dispatching an action in its componentWillMount, we have to re-run the select and maybe
+                // re-render.
+                this.subscription.trySubscribe()
+                this.selector.run(this.props)
+                if (this.selector.shouldComponentUpdate) this.forceUpdate()
+            }
+
+            componentWillReceiveProps(nextProps) {
+                this.selector.run(nextProps)
+            }
+
+            shouldComponentUpdate() {
+                return this.selector.shouldComponentUpdate
+            }
+
+            componentWillUnmount() {
+                if (this.subscription) this.subscription.tryUnsubscribe()
+                this.subscription = null
+                this.notifyNestedSubs = noop
+                this.store = null
+                this.selector.run = noop
+                this.selector.shouldComponentUpdate = false
+            }
+
+            getWrappedInstance() {
+                invariant(
+                    withRef,
+                    `To access the wrapped instance, you need to specify ` +
+                        `{ withRef: true } in the options argument of the ${methodName}() call.`
+                )
+                return this.wrappedInstance
+            }
+
+            setWrappedInstance(ref) {
+                this.wrappedInstance = ref
+            }
+
+            initSelector() {
+                const sourceSelector = selectorFactory(this.store, selectorFactoryOptions)
+                this.selector = makeSelectorStateful(sourceSelector, this.store)
+                this.selector.run(this.props)
+            }
+
+            initSubscription() {
+                if (!shouldHandleStateChanges) return
+
+                // parentSub's source should match where store came from: props vs. context. A component
+                // connected to the store via props shouldn't use subscription from context, or vice versa.
+                const parentSub = (this.propsMode ? this.props : this.context)[subscriptionKey]
+                this.subscription = new Subscription(
+                    this.store,
+                    parentSub,
+                    this.onStateChange.bind(this)
+                )
+
+                // `notifyNestedSubs` is duplicated to handle the case where the component is unmounted in
+                // the middle of the notification loop, where `this.subscription` will then be null. An
+                // extra null check every change can be avoided by copying the method onto `this` and then
+                // replacing it with a no-op on unmount. This can probably be avoided if Subscription's
+                // listeners logic is changed to not call listeners that have been unsubscribed in the
+                // middle of the notification loop.
+                this.notifyNestedSubs = this.subscription.notifyNestedSubs.bind(this.subscription)
+            }
+
+            onStateChange() {
+                this.selector.run(this.props)
+
+                if (!this.selector.shouldComponentUpdate) {
+                    this.notifyNestedSubs()
+                } else {
+                    this.componentDidUpdate = this.notifyNestedSubsOnComponentDidUpdate
+                    this.setState(dummyState)
                 }
+            }
 
-                let derivedProps = this.selectDerivedProps(storeState, wrapperProps, store)
+            notifyNestedSubsOnComponentDidUpdate() {
+                // `componentDidUpdate` is conditionally implemented when `onStateChange` determines it
+                // needs to notify nested subs. Once called, it unimplements itself until further state
+                // changes occur. Doing it this way vs having a permanent `componentDidUpdate` that does
+                // a boolean check every time avoids an extra method call most of the time, resulting
+                // in some perf boost.
+                this.componentDidUpdate = undefined
+                this.notifyNestedSubs()
+            }
 
-                return this.selectChildElement(derivedProps, forwardedRef)
+            isSubscribed() {
+                return Boolean(this.subscription) && this.subscription.isSubscribed()
+            }
+
+            addExtraProps(props) {
+                if (!withRef && !renderCountProp && !(this.propsMode && this.subscription))
+                    return props
+                // make a shallow copy so that fields added don't leak to the original selector.
+                // this is especially important for 'ref' since that's a reference back to the component
+                // instance. a singleton memoized selector would then be holding a reference to the
+                // instance, preventing the instance from being garbage collected, and that would be bad
+                const withExtras = { ...props }
+                if (withRef) withExtras.ref = this.setWrappedInstance
+                if (renderCountProp) withExtras[renderCountProp] = this.renderCount++
+                if (this.propsMode && this.subscription)
+                    withExtras[subscriptionKey] = this.subscription
+                return withExtras
             }
 
             render() {
-                const ContextToUse = this.props.context || Context
+                const selector = this.selector
+                selector.shouldComponentUpdate = false
 
-                return <ContextToUse.Consumer>{this.renderWrappedComponent}</ContextToUse.Consumer>
+                if (selector.error) {
+                    throw selector.error
+                } else {
+                    return createElement(WrappedComponent, this.addExtraProps(selector.props))
+                }
             }
         }
 
+        /* eslint-enable react/no-deprecated */
+
         Connect.WrappedComponent = WrappedComponent
         Connect.displayName = displayName
+        Connect.childContextTypes = childContextTypes
+        Connect.contextTypes = contextTypes
+        Connect.propTypes = contextTypes
 
-        if (forwardRef) {
-            const forwarded = React.forwardRef(function forwardConnectRef(props, ref) {
-                return <Connect wrapperProps={props} forwardedRef={ref} />
-            })
+        if (process.env.NODE_ENV !== 'production') {
+            Connect.prototype.componentWillUpdate = function componentWillUpdate() {
+                // We are hot reloading!
+                if (this.version !== version) {
+                    this.version = version
+                    this.initSelector()
 
-            forwarded.displayName = displayName
-            forwarded.WrappedComponent = WrappedComponent
-            return hoistStatics(forwarded, WrappedComponent)
+                    // If any connected descendants don't hot reload (and resubscribe in the process), their
+                    // listeners will be lost when we unsubscribe. Unfortunately, by copying over all
+                    // listeners, this does mean that the old versions of connected descendants will still be
+                    // notified of state changes; however, their onStateChange function is a no-op so this
+                    // isn't a huge deal.
+                    let oldListeners = []
+
+                    if (this.subscription) {
+                        oldListeners = this.subscription.listeners.get()
+                        this.subscription.tryUnsubscribe()
+                    }
+                    this.initSubscription()
+                    if (shouldHandleStateChanges) {
+                        this.subscription.trySubscribe()
+                        oldListeners.forEach(listener =>
+                            this.subscription.listeners.subscribe(listener)
+                        )
+                    }
+                }
+            }
         }
 
         return hoistStatics(Connect, WrappedComponent)
