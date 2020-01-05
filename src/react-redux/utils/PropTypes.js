@@ -12,5 +12,5 @@ export const storeShape = PropTypes.shape({
     commit: PropTypes.func.isRequired,
     dispatch: PropTypes.func.isRequired,
     get: PropTypes.func.isRequired,
-    select: PropTypes.func.isRequired,
+    select: PropTypes.object.isRequired,
 })
