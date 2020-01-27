@@ -1,4 +1,4 @@
-import verifyPlainObject from '../utils/verifyPlainObject'
+import verifyPlainObject from 'react-redux/lib/utils/verifyPlainObject'
 
 export function wrapMapToPropsConstant(getConstant) {
     return function initConstantSelector(store, options) {

@@ -1,60 +1,50 @@
-import { Component, Children } from 'react'
+import React, { useMemo, useEffect } from 'react'
 import PropTypes from 'prop-types'
-import { storeShape, subscriptionShape } from '../utils/PropTypes'
-import warning from '../utils/warning'
+import { ReactReduxContext } from 'react-redux'
+import Subscription from 'react-redux/lib/utils/Subscription'
 
-let didWarnAboutReceivingStore = false
-function warnAboutReceivingStore() {
-  if (didWarnAboutReceivingStore) {
-    return
+function Provider({ store, context, children }) {
+  const contextValue = useMemo(() => {
+    const subscription = new Subscription(store)
+    subscription.onStateChange = subscription.notifyNestedSubs
+    return {
+      store,
+      subscription
+    }
+  }, [store])
+
+  const previousState = useMemo(() => store.get(), [store])
+
+  useEffect(() => {
+    const { subscription } = contextValue
+    subscription.trySubscribe()
+
+    if (previousState !== store.get()) {
+      subscription.notifyNestedSubs()
+    }
+    return () => {
+      subscription.tryUnsubscribe()
+      subscription.onStateChange = null
+    }
+  }, [contextValue, previousState])
+
+  const Context = context || ReactReduxContext
+
+  return <Context.Provider value={contextValue}>{children}</Context.Provider>
+}
+
+if (process.env.NODE_ENV !== 'production') {
+  Provider.propTypes = {
+    store: PropTypes.shape({
+        subscribe: PropTypes.func.isRequired,
+        commit: PropTypes.func.isRequired,
+        dispatch: PropTypes.func.isRequired,
+        get: PropTypes.func.isRequired,
+        select: PropTypes.object.isRequired,
+    }),
+    context: PropTypes.object,
+    children: PropTypes.any
   }
-  didWarnAboutReceivingStore = true
-
-  warning(
-    '<Provider> does not support changing `store` on the fly. ' +
-    'It is most likely that you see this error because you updated to ' +
-    'Redux 2.x and React Redux 2.x which no longer hot reload reducers ' +
-    'automatically. See https://github.com/reduxjs/react-redux/releases/' +
-    'tag/v2.0.0 for the migration instructions.'
-  )
 }
 
-export function createProvider(storeKey = 'store') {
-    const subscriptionKey = `${storeKey}Subscription`
-
-    class Provider extends Component {
-        getChildContext() {
-          return { [storeKey]: this[storeKey], [subscriptionKey]: null }
-        }
-
-        constructor(props, context) {
-          super(props, context)
-          this[storeKey] = props.store;
-        }
-
-        render() {
-          return Children.only(this.props.children)
-        }
-    }
-
-    if (process.env.NODE_ENV !== 'production') {
-      Provider.prototype.componentWillReceiveProps = function (nextProps) {
-        if (this[storeKey] !== nextProps.store) {
-          warnAboutReceivingStore()
-        }
-      }
-    }
-
-    Provider.propTypes = {
-        store: storeShape.isRequired,
-        children: PropTypes.element.isRequired,
-    }
-    Provider.childContextTypes = {
-        [storeKey]: storeShape.isRequired,
-        [subscriptionKey]: subscriptionShape,
-    }
-
-    return Provider
-}
-
-export default createProvider()
+export default Provider

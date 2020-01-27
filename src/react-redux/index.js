@@ -1,5 +1,15 @@
-import Provider, { createProvider } from './components/Provider'
-import connectAdvanced from './components/connectAdvanced'
-import connect from './connect/connect'
+export { createDispatchHook, useDispatch } from './hooks/useDispatch'
+export { createSelectorHook, useSelector } from './hooks/useSelector'
 
-export { Provider, createProvider, connectAdvanced, connect }
+export { default as Provider } from './components/Provider'
+export { default as connect } from './connect/connect'
+export { default as connectAdvanced } from './components/connectAdvanced'
+
+
+export {
+  ReactReduxContext,
+  batch,
+  useStore,
+  createStoreHook,
+  shallowEqual
+} from 'react-redux'

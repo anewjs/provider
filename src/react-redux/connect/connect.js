@@ -1,8 +1,9 @@
+import shallowEqual from 'react-redux/lib/utils/shallowEqual'
+import defaultMergePropsFactories from 'react-redux/lib/connect/mergeProps'
+
 import connectAdvanced from '../components/connectAdvanced'
-import shallowEqual from '../utils/shallowEqual'
-import defaultMapDispatchToPropsFactories from './mapDispatchToProps'
 import defaultMapStateToPropsFactories from './mapStateToProps'
-import defaultMergePropsFactories from './mergeProps'
+import defaultMapDispatchToPropsFactories from './mapDispatchToProps'
 import defaultSelectorFactory from './selectorFactory'
 
 /*
