@@ -1,7 +1,7 @@
 import { useReducer, useRef, useMemo, useContext } from 'react'
 import { ReactReduxContext } from 'react-redux'
-import {useReduxContext as useDefaultReduxContext} from 'react-redux/lib/hooks/useReduxContext'
-import {useIsomorphicLayoutEffect} from 'react-redux/lib/utils/useIsomorphicLayoutEffect'
+import { useReduxContext as useDefaultReduxContext } from 'react-redux/lib/hooks/useReduxContext'
+import { useIsomorphicLayoutEffect } from 'react-redux/lib/utils/useIsomorphicLayoutEffect'
 import Subscription from 'react-redux/lib/utils/Subscription'
 
 const refEquality = (a, b) => a === b
@@ -31,15 +31,17 @@ function useSelectorWithStoreAndSubscription(
       latestSubscriptionCallbackError.current
     ) {
       selectedState = selector({
-          get: store.get,
-          select: store.select,
+        get: store.get,
+        select: store.select
       })
     } else {
       selectedState = latestSelectedState.current
     }
   } catch (err) {
     if (latestSubscriptionCallbackError.current) {
-      err.message += `\nThe error may be correlated with this previous error:\n${latestSubscriptionCallbackError.current.stack}\n\n`
+      err.message += `\nThe error may be correlated with this previous error:\n${
+        latestSubscriptionCallbackError.current.stack
+      }\n\n`
     }
 
     throw err
@@ -51,37 +53,40 @@ function useSelectorWithStoreAndSubscription(
     latestSubscriptionCallbackError.current = undefined
   })
 
-  useIsomorphicLayoutEffect(() => {
-    function checkForUpdates() {
-      try {
-        const newSelectedState = latestSelector.current({
+  useIsomorphicLayoutEffect(
+    () => {
+      function checkForUpdates() {
+        try {
+          const newSelectedState = latestSelector.current({
             get: store.get,
-            select: store.select,
-        })
+            select: store.select
+          })
 
-        if (equalityFn(newSelectedState, latestSelectedState.current)) {
-          return
+          if (equalityFn(newSelectedState, latestSelectedState.current)) {
+            return
+          }
+
+          latestSelectedState.current = newSelectedState
+        } catch (err) {
+          // we ignore all errors here, since when the component
+          // is re-rendered, the selectors are called again, and
+          // will throw again, if neither props nor store state
+          // changed
+          latestSubscriptionCallbackError.current = err
         }
 
-        latestSelectedState.current = newSelectedState
-      } catch (err) {
-        // we ignore all errors here, since when the component
-        // is re-rendered, the selectors are called again, and
-        // will throw again, if neither props nor store state
-        // changed
-        latestSubscriptionCallbackError.current = err
+        forceRender({})
       }
 
-      forceRender({})
-    }
+      subscription.onStateChange = checkForUpdates
+      subscription.trySubscribe()
 
-    subscription.onStateChange = checkForUpdates
-    subscription.trySubscribe()
+      checkForUpdates()
 
-    checkForUpdates()
-
-    return () => subscription.tryUnsubscribe()
-  }, [store, subscription])
+      return () => subscription.tryUnsubscribe()
+    },
+    [store, subscription]
+  )
 
   return selectedState
 }

@@ -1,15 +1,15 @@
 import verifyPlainObject from 'react-redux/lib/utils/verifyPlainObject'
 
 export function wrapMapToPropsConstant(getConstant) {
-    return function initConstantSelector(store, options) {
-        const constant = getConstant(store, options)
+  return function initConstantSelector(store, options) {
+    const constant = getConstant(store, options)
 
-        function constantSelector() {
-            return constant
-        }
-        constantSelector.dependsOnOwnProps = false
-        return constantSelector
+    function constantSelector() {
+      return constant
     }
+    constantSelector.dependsOnOwnProps = false
+    return constantSelector
+  }
 }
 
 // dependsOnOwnProps is used by createMapToPropsProxy to determine whether to pass props as args
@@ -20,9 +20,10 @@ export function wrapMapToPropsConstant(getConstant) {
 // A length of zero is assumed to mean mapToProps is getting args via arguments or ...args and
 // therefore not reporting its length accurately..
 export function getDependsOnOwnProps(mapToProps) {
-    return mapToProps.dependsOnOwnProps !== null && mapToProps.dependsOnOwnProps !== undefined
-        ? Boolean(mapToProps.dependsOnOwnProps)
-        : mapToProps.length !== 1
+  return mapToProps.dependsOnOwnProps !== null &&
+    mapToProps.dependsOnOwnProps !== undefined
+    ? Boolean(mapToProps.dependsOnOwnProps)
+    : mapToProps.length !== 1
 }
 
 // Used by whenMapStateToPropsIsFunction and whenMapDispatchToPropsIsFunction,
@@ -38,33 +39,33 @@ export function getDependsOnOwnProps(mapToProps) {
 //    the developer that their mapToProps function is not returning a valid result.
 //
 export function wrapMapToPropsFunc(mapToProps, methodName) {
-    return function initProxySelector(dispatch, { displayName }) {
-        const proxy = function mapToPropsProxy(store, ownProps) {
-            return proxy.dependsOnOwnProps
-                ? proxy.mapToProps(store, ownProps)
-                : proxy.mapToProps(store)
-        }
-
-        // allow detectFactoryAndVerify to get ownProps
-        proxy.dependsOnOwnProps = true
-
-        proxy.mapToProps = function detectFactoryAndVerify(store, ownProps) {
-            proxy.mapToProps = mapToProps
-            proxy.dependsOnOwnProps = getDependsOnOwnProps(mapToProps)
-            let props = proxy(store, ownProps)
-
-            if (typeof props === 'function') {
-                proxy.mapToProps = props
-                proxy.dependsOnOwnProps = getDependsOnOwnProps(props)
-                props = proxy(store, ownProps)
-            }
-
-            if (process.env.NODE_ENV !== 'production')
-                verifyPlainObject(props, displayName, methodName)
-
-            return props
-        }
-
-        return proxy
+  return function initProxySelector(dispatch, { displayName }) {
+    const proxy = function mapToPropsProxy(store, ownProps) {
+      return proxy.dependsOnOwnProps
+        ? proxy.mapToProps(store, ownProps)
+        : proxy.mapToProps(store)
     }
+
+    // allow detectFactoryAndVerify to get ownProps
+    proxy.dependsOnOwnProps = true
+
+    proxy.mapToProps = function detectFactoryAndVerify(store, ownProps) {
+      proxy.mapToProps = mapToProps
+      proxy.dependsOnOwnProps = getDependsOnOwnProps(mapToProps)
+      let props = proxy(store, ownProps)
+
+      if (typeof props === 'function') {
+        proxy.mapToProps = props
+        proxy.dependsOnOwnProps = getDependsOnOwnProps(props)
+        props = proxy(store, ownProps)
+      }
+
+      if (process.env.NODE_ENV !== 'production')
+        verifyPlainObject(props, displayName, methodName)
+
+      return props
+    }
+
+    return proxy
+  }
 }

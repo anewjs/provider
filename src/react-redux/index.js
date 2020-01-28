@@ -5,7 +5,6 @@ export { default as Provider } from './components/Provider'
 export { default as connect } from './connect/connect'
 export { default as connectAdvanced } from './components/connectAdvanced'
 
-
 export {
   ReactReduxContext,
   batch,

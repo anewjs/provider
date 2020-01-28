@@ -1,4 +1,8 @@
-import { useStore as useDefaultStore, createStoreHook, ReactReduxContext } from 'react-redux'
+import {
+  useStore as useDefaultStore,
+  createStoreHook,
+  ReactReduxContext
+} from 'react-redux'
 
 /**
  * Hook factory, which creates a `useDispatch` hook bound to a given context.
@@ -12,11 +16,11 @@ export function createDispatchHook(context = ReactReduxContext) {
 
   return function useDispatch() {
     const store = useStore()
-    
+
     return {
-        dispatch: store.dispatch,
-        commit: store.commit,
-    } 
+      dispatch: store.dispatch,
+      commit: store.commit
+    }
   }
 }
 
