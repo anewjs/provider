@@ -14,13 +14,13 @@ export function createDispatchHook(context = ReactReduxContext) {
   const useStore =
     context === ReactReduxContext ? useDefaultStore : createStoreHook(context)
 
-  return function useDispatch() {
+  return function useDispatch(selector) {
     const store = useStore()
 
-    return {
+    return selector({
       dispatch: store.dispatch,
       commit: store.commit
-    }
+    })
   }
 }
 

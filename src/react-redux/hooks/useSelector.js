@@ -39,9 +39,7 @@ function useSelectorWithStoreAndSubscription(
     }
   } catch (err) {
     if (latestSubscriptionCallbackError.current) {
-      err.message += `\nThe error may be correlated with this previous error:\n${
-        latestSubscriptionCallbackError.current.stack
-      }\n\n`
+      err.message += `\nThe error may be correlated with this previous error:\n${latestSubscriptionCallbackError.current.stack}\n\n`
     }
 
     throw err
@@ -53,40 +51,37 @@ function useSelectorWithStoreAndSubscription(
     latestSubscriptionCallbackError.current = undefined
   })
 
-  useIsomorphicLayoutEffect(
-    () => {
-      function checkForUpdates() {
-        try {
-          const newSelectedState = latestSelector.current({
-            get: store.get,
-            select: store.select
-          })
+  useIsomorphicLayoutEffect(() => {
+    function checkForUpdates() {
+      try {
+        const newSelectedState = latestSelector.current({
+          get: store.get,
+          select: store.select
+        })
 
-          if (equalityFn(newSelectedState, latestSelectedState.current)) {
-            return
-          }
-
-          latestSelectedState.current = newSelectedState
-        } catch (err) {
-          // we ignore all errors here, since when the component
-          // is re-rendered, the selectors are called again, and
-          // will throw again, if neither props nor store state
-          // changed
-          latestSubscriptionCallbackError.current = err
+        if (equalityFn(newSelectedState, latestSelectedState.current)) {
+          return
         }
 
-        forceRender({})
+        latestSelectedState.current = newSelectedState
+      } catch (err) {
+        // we ignore all errors here, since when the component
+        // is re-rendered, the selectors are called again, and
+        // will throw again, if neither props nor store state
+        // changed
+        latestSubscriptionCallbackError.current = err
       }
 
-      subscription.onStateChange = checkForUpdates
-      subscription.trySubscribe()
+      forceRender({})
+    }
 
-      checkForUpdates()
+    subscription.onStateChange = checkForUpdates
+    subscription.trySubscribe()
 
-      return () => subscription.tryUnsubscribe()
-    },
-    [store, subscription]
-  )
+    checkForUpdates()
+
+    return () => subscription.tryUnsubscribe()
+  }, [store, subscription])
 
   return selectedState
 }
@@ -100,8 +95,9 @@ function useSelectorWithStoreAndSubscription(
 export function createSelectorHook(context = ReactReduxContext) {
   const useReduxContext =
     context === ReactReduxContext
-      ? useDefaultReduxContext
+      ? () => useContext(ReactReduxContext)
       : () => useContext(context)
+
   return function useSelector(selector, equalityFn = refEquality) {
     if (process.env.NODE_ENV !== 'production' && !selector) {
       throw new Error(`You must pass a selector to useSelectors`)
