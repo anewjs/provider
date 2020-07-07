@@ -31,8 +31,8 @@ function useSelectorWithStoreAndSubscription(
       latestSubscriptionCallbackError.current
     ) {
       selectedState = selector({
-        get: store.get,
-        select: store.select
+        getters: store.getters,
+        state: store.state
       })
     } else {
       selectedState = latestSelectedState.current
@@ -55,8 +55,8 @@ function useSelectorWithStoreAndSubscription(
     function checkForUpdates() {
       try {
         const newSelectedState = latestSelector.current({
-          get: store.get,
-          select: store.select
+          getters: store.getters,
+          state: store.state
         })
 
         if (equalityFn(newSelectedState, latestSelectedState.current)) {

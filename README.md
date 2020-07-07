@@ -2,11 +2,13 @@
 
 > A small util for providing and connecting store to application.
 
+🔥🔥🔥 For Hooks see the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
+
 ## Table of Contents
 
--   [Installation](#installation)
--   [Usage](#usage)
--   [Parameters](#parameters)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Parameters](#parameters)
 
 ## Installation
 
@@ -31,26 +33,26 @@ import Provider from '@anew/provider'
 import Router from '@anew/router'
 
 class App extends React.Component {
-    static mapStateToProps = select => ({
-        count: select.count(),
-    })
+  static mapStateToProps = select => ({
+    count: select.count()
+  })
 
-    static mapDispatchToProps = dispatch => ({
-        inc: dispatch.reducers.inc(),
-    })
+  static mapDispatchToProps = dispatch => ({
+    inc: dispatch.reducers.inc()
+  })
 
-    render() {
-        // Access Connected Props
-        const { count, inc } = this.props
+  render() {
+    // Access Connected Props
+    const { count, inc } = this.props
 
-        return (
-            <center>
-                <span>{count}</span>
-                <hr />
-                <button onClick={inc}>INC</button>
-            </center>
-        )
-    }
+    return (
+      <center>
+        <span>{count}</span>
+        <hr />
+        <button onClick={inc}>INC</button>
+      </center>
+    )
+  }
 }
 
 // Connect App to Store
@@ -59,21 +61,21 @@ const ConnectedApp = Provider.connect(App)
 // Create App Core Store
 // See @anew/store for more on Store
 const AppStore = Store({
-    name: 'core',
+  name: 'core',
 
-    state: {
-        count: 1,
-    },
+  state: {
+    count: 1
+  },
 
-    reducers: {
-        inc: state => ({
-            count: state.count + 1,
-        }),
-    },
+  reducers: {
+    inc: state => ({
+      count: state.count + 1
+    })
+  },
 
-    selectors: {
-        count: store => store.create(state => state.count),
-    },
+  selectors: {
+    count: store => store.create(state => state.count)
+  }
 })
 
 // Share AnewStore with entire App
@@ -86,12 +88,9 @@ ReactDOM.render(Provider.wrap(ConnectedApp), document.getElementById('root'))
 ## Parameters
 
 ```js
-Provider.wrap(
-    Component: ReactComponent,
-    {
-        Provider: ReactComponent,
-    }
-)
+Provider.wrap((Component: ReactComponent), {
+  Provider: ReactComponent
+})
 ```
 
 `Component`: Entry react component to Application.

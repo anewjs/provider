@@ -18,8 +18,8 @@ export function createDispatchHook(context = ReactReduxContext) {
     const store = useStore()
 
     return selector({
-      dispatch: store.dispatch,
-      commit: store.commit
+      actions: store.actions,
+      reducers: store.reducers
     })
   }
 }
