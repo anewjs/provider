@@ -33,12 +33,12 @@ import Provider from '@anew/provider'
 import Router from '@anew/router'
 
 class App extends React.Component {
-  static mapStateToProps = select => ({
-    count: select.count()
+  static mapStateToProps = ({ state, getters }) => ({
+    count: state.count
   })
 
-  static mapDispatchToProps = dispatch => ({
-    inc: dispatch.reducers.inc()
+  static mapDispatchToProps = ({ actions, reducers }) => ({
+    inc: actions.inc
   })
 
   render() {
@@ -60,7 +60,7 @@ const ConnectedApp = Provider.connect(App)
 
 // Create App Core Store
 // See @anew/store for more on Store
-const AppStore = Store({
+const AppStore = new Store({
   name: 'core',
 
   state: {
@@ -73,8 +73,8 @@ const AppStore = Store({
     })
   },
 
-  selectors: {
-    count: store => store.create(state => state.count)
+  getters: {
+    countDoubled: state => state.count * 2
   }
 })
 
