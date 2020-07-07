@@ -1,8 +1,8 @@
-# Anew Provider
+# `@anew/provider`
 
 > A small util for providing and connecting store to application.
 
-🔥🔥🔥 For Hooks see the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
+🔥🔥🔥 &nbsp;For Hooks see the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
 
 ## Table of Contents
 
