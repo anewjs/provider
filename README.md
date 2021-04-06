@@ -1,6 +1,6 @@
 # DEPRECATED
 
-🔥🔥🔥 &nbsp; Use the new hooksimplementation. See the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
+🔥🔥🔥 &nbsp; Use the new hooks implementation. See the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
 
 # `@anew/provider`
 
