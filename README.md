@@ -1,8 +1,10 @@
+# DEPRECATED
+
+🔥🔥🔥 &nbsp; Use the new hooksimplementation. See the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
+
 # `@anew/provider`
 
 > A small util for providing and connecting store to application.
-
-🔥🔥🔥 &nbsp;For Hooks see the [@anew/hooks](https://github.com/anewjs/hooks) package 🔥🔥🔥
 
 ## Table of Contents
 
